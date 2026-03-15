@@ -107,7 +107,27 @@ def generate_dataset(
     seed=42,
     max_time=150,
 ):
-    """Backward-compatible function."""
+    """Generate a vector-field SIR dataset and save it to a CSV file.
+
+    Backward-compatible wrapper around :class:`DataPipeline`.
+
+    Args:
+        output_path (str | Path): Destination CSV path.
+        num_param_points (int): Number of (beta, gamma) parameter samples.
+        num_runs_per_param (int): Gillespie runs to average per parameter point.
+        population (int): Total population N.
+        num_timepoints (int): Uniform time-grid points per trajectory.
+        beta_min (float): Lower bound for beta sampling.
+        beta_max (float): Upper bound for beta sampling.
+        gamma_min (float): Lower bound for gamma sampling.
+        gamma_max (float): Upper bound for gamma sampling.
+        seed (int): Random seed for reproducibility.
+        max_time (float): Maximum simulation time.
+
+    Returns:
+        pd.DataFrame: Generated dataset with columns
+            [beta, gamma, t, S, I, R, dS_dt, dI_dt, dR_dt].
+    """
     config = dict(population=population, beta_min=beta_min, beta_max=beta_max,
                   gamma_min=gamma_min, gamma_max=gamma_max, seed=seed)
     pipeline = DataPipeline(config)

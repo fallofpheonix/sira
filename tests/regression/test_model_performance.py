@@ -41,5 +41,6 @@ def test_model_performance_threshold(tmp_path):
     preds = torch.cat(preds).numpy()
     targets = torch.cat(targets).numpy()
     r2 = compute_r2(preds, targets)
-    # Very loose threshold; a trained model should beat naive baseline
-    assert r2 > -1.0, f"R2={r2:.3f} is unexpectedly bad"
+    # Very loose threshold; even with minimal training the model should
+    # produce predictions better than a constant baseline (R² > 0)
+    assert r2 > 0.0, f"R2={r2:.3f}: model did not learn useful patterns"
