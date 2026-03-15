@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from pathlib import Path
 import os
+from src.inference.api.schemas import (
+    VectorFieldRequest, VectorFieldResponse,
+    TrajectoryRequest, TrajectoryResponse,
+)
 
 app = FastAPI(title="SIRA Inference API")
 
@@ -30,8 +34,7 @@ def list_models():
 
 
 @app.post("/predict/vector_field")
-def predict_vector_field(request: "VectorFieldRequest"):
-    from src.inference.api.schemas import VectorFieldRequest, VectorFieldResponse
+def predict_vector_field(request: VectorFieldRequest):
     if app.state.predictor is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
     dS, dI, dR = app.state.predictor.predict(request.S, request.I, request.R)
@@ -39,8 +42,7 @@ def predict_vector_field(request: "VectorFieldRequest"):
 
 
 @app.post("/simulate/trajectory")
-def simulate_trajectory(request: "TrajectoryRequest"):
-    from src.inference.api.schemas import TrajectoryRequest, TrajectoryResponse
+def simulate_trajectory(request: TrajectoryRequest):
     if app.state.predictor is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
     traj = app.state.predictor.predict_trajectory(

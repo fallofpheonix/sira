@@ -3,6 +3,9 @@ import pandas as pd
 
 
 class QualityValidator:
+    def __init__(self, conservation_tol=0.05):
+        self.conservation_tol = conservation_tol
+
     def validate(self, df):
         issues = []
         if not self.check_nan(df):
@@ -25,4 +28,4 @@ class QualityValidator:
 
     def check_conservation(self, df):
         total = df['S'] + df['I'] + df['R']
-        return bool((total - 1.0).abs().max() < 0.05)
+        return bool((total - 1.0).abs().max() < self.conservation_tol)

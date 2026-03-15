@@ -24,9 +24,8 @@ def test_population_conservation():
 def test_simulation_terminates():
     sim = SIRSimulator(N=100, beta=0.3, gamma=0.1)
     t, s, i, r = sim.simulate_gillespie(95, 5, 0, max_time=50)
-    # The simulation must terminate: either I goes to 0, or the second-to-last
-    # time was within max_time (last event may push slightly past it)
-    assert i[-1] == 0 or len(t) > 1
+    # Either epidemic exhausted (I=0) or simulation hit the time limit
+    assert i[-1] == 0 or t[-1] >= 50
 
 
 def test_interpolation():
