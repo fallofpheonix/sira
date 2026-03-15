@@ -39,16 +39,17 @@ def main():
 
     for lr in SWEEP_CONFIG['learning_rate']:
         for hidden_dim in SWEEP_CONFIG['hidden_dim']:
-            model = VectorFieldMLP(hidden_dim=hidden_dim)
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-            criterion = nn.MSELoss()
-            trainer = Trainer(model, optimizer, criterion)
-            history = trainer.fit(train_loader, val_loader, epochs=20)
-            val_loss = min(history['val_loss']) if history['val_loss'] else float('inf')
-            print(f"lr={lr}, hidden={hidden_dim} -> val_loss={val_loss:.6f}")
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_config = {'lr': lr, 'hidden_dim': hidden_dim}
+            for num_layers in SWEEP_CONFIG['num_layers']:
+                model = VectorFieldMLP(hidden_dim=hidden_dim, num_layers=num_layers)
+                optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+                criterion = nn.MSELoss()
+                trainer = Trainer(model, optimizer, criterion)
+                history = trainer.fit(train_loader, val_loader, epochs=20)
+                val_loss = min(history['val_loss']) if history['val_loss'] else float('inf')
+                print(f"lr={lr}, hidden={hidden_dim}, layers={num_layers} -> val_loss={val_loss:.6f}")
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    best_config = {'lr': lr, 'hidden_dim': hidden_dim, 'num_layers': num_layers}
 
     print(f"\nBest config: {best_config} with val_loss={best_val_loss:.6f}")
 

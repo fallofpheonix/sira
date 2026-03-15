@@ -17,7 +17,13 @@ class QualityValidator:
         return len(issues) == 0, issues
 
     def check_nan(self, df):
-        return not df[['S', 'I', 'R', 'dS_dt', 'dI_dt', 'dR_dt']].isnull().any().any()
+        required = ['S', 'I', 'R', 'dS_dt', 'dI_dt', 'dR_dt']
+        missing = [c for c in required if c not in df.columns]
+        if missing:
+            raise ValueError(
+                f"check_nan: required columns missing from DataFrame: {missing}"
+            )
+        return not df[required].isnull().any().any()
 
     def check_bounds(self, df):
         for col in ['S', 'I', 'R']:
