@@ -1,0 +1,13 @@
+data:
+  population: 1000
+  beta_min: 0.1
+  beta_max: 0.9
+  gamma_min: 0.02
+  gamma_max: 0.4
+  num_param_points: 500
+  num_runs_per_param: 20
+  num_timepoints: 100
+  max_time: 150
+  seed: 42
+  output_path: data/processed/sir_vector_field.csv
+  num_workers: 4
