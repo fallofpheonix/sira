@@ -6,3 +6,9 @@ matplotlib
 torch
 torchvision
 torchaudio
+fastapi
+uvicorn
+mlflow
+pyyaml
+pytest
+pytest-cov
