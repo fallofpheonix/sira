@@ -6,13 +6,14 @@ from src.training.callbacks import EarlyStopping, ModelCheckpoint
 
 class Trainer:
     def __init__(self, model, optimizer, criterion, device='cpu', config=None,
-                 mlflow_enabled=False):
+                 mlflow_enabled=False, model_kwargs=None):
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
         self.device = device
         self.config = config or {}
         self.mlflow_enabled = mlflow_enabled
+        self.model_kwargs = model_kwargs or {}
         self._mlflow = None
         if mlflow_enabled:
             try:
@@ -22,6 +23,7 @@ class Trainer:
                 self.mlflow_enabled = False
 
     def fit(self, train_loader, val_loader=None, epochs=100):
+        self.model.to(self.device)
         patience = self.config.get('early_stopping_patience', 20)
         checkpoint_dir = self.config.get('checkpoint_dir', 'checkpoints/')
         early_stopping = EarlyStopping(patience=patience, min_delta=1e-6)
@@ -81,6 +83,8 @@ class Trainer:
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'loss': loss,
+            'model_name': type(self.model).__name__,
+            'model_kwargs': self.model_kwargs,
         }, path)
 
     def resume_from_checkpoint(self, path):

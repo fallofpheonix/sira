@@ -47,6 +47,11 @@ def plot_trajectory(t, S, I, R, output_path=None):
 
 def plot_vector_field(model, output_path=None):
     import torch
+    # Determine the device of the model so inputs are placed correctly.
+    try:
+        model_device = next(model.parameters()).device
+    except StopIteration:
+        model_device = torch.device('cpu')
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
     s_vals = np.linspace(0, 1, 20)
     i_vals = np.linspace(0, 1, 20)
@@ -56,9 +61,9 @@ def plot_vector_field(model, output_path=None):
         for si, sv in enumerate(s_vals):
             for ii, iv in enumerate(i_vals):
                 rv = max(0, 1 - sv - iv)
-                x = torch.tensor([[sv, iv, rv]], dtype=torch.float32)
+                x = torch.tensor([[sv, iv, rv]], dtype=torch.float32, device=model_device)
                 with torch.no_grad():
-                    out = model(x).numpy()
+                    out = model(x).detach().cpu().numpy()
                 Z[ii, si] = out[0, ax_idx]
         im = ax.imshow(Z, extent=[0, 1, 0, 1], origin='lower', aspect='auto')
         ax.set_title(labels[ax_idx])

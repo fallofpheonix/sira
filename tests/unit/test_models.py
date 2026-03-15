@@ -1,8 +1,5 @@
 import torch
 import pytest
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.models.architectures.mlp import VectorFieldMLP
 from src.models.architectures.physics_informed import PhysicsInformedMLP

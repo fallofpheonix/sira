@@ -38,8 +38,9 @@ class SINDy:
 
         Expects equation keys in the format 'dX_dt' (e.g. 'dS_dt', 'dI_dt', 'dR_dt').
         """
-        assert all('_' in eq for eq in self.results_), (
-            "Equation keys must follow the 'dX_dt' naming convention.")
+        if not all('_' in eq for eq in self.results_):
+            raise RuntimeError(
+                "Equation keys must follow the 'dX_dt' naming convention.")
         lines = []
         for eq, terms in self.results_.items():
             expr = " + ".join(f"{c:.4f} {n}" for n, c in terms)
