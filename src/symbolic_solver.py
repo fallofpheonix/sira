@@ -1,5 +1,10 @@
 import argparse
+import sys
 from pathlib import Path
+
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 import numpy as np
 import pandas as pd
@@ -32,7 +37,6 @@ def sindy_baseline(df, threshold=1e-3):
 
 
 def main():
-    repo_root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Run SINDy baseline on vector-field dataset.")
     parser.add_argument(
         "--data-path",

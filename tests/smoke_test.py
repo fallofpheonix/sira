@@ -1,5 +1,10 @@
 import argparse
+import sys
 from pathlib import Path
+
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 from src.generate_data import generate_dataset
 from src.train_ml import train
@@ -7,7 +12,6 @@ from src.visualize_results import visualize_results
 
 
 def main():
-    repo_root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Fast smoke test for SIRA pipeline.")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--num-param-points", type=int, default=20)

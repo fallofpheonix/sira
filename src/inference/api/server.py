@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pathlib import Path
 import os
@@ -6,11 +7,9 @@ from src.inference.api.schemas import (
     TrajectoryRequest, TrajectoryResponse,
 )
 
-app = FastAPI(title="SIRA Inference API")
 
-
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     model_path = os.environ.get("MODEL_PATH", "models/vector_field_mlp.pth")
     app.state.model_path = model_path
     if Path(model_path).exists():
@@ -20,6 +19,10 @@ async def startup():
         app.state.predictor = predictor
     else:
         app.state.predictor = None
+    yield
+
+
+app = FastAPI(title="SIRA Inference API", lifespan=lifespan)
 
 
 @app.get("/health")

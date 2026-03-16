@@ -31,8 +31,8 @@ Output: `results/symbolic_expression.txt`
 Output: `results/vector_field_parity.png`, `results/evaluation_report.md`
 
 ## Phase 5 — Packaging (Weeks 11–12)
-- Write reproducible notebook walkthrough
 - Finalize README and documentation
-- Ensure `python generate_data.py && python train_ml.py` runs end-to-end
+- Validate the lightweight submission demo pipeline
+- Assemble the submission bundle with run instructions and checklist
 
-Output: `notebooks/walkthrough.ipynb`
+Output: `submission/`

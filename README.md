@@ -49,7 +49,9 @@ SIRA/
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
 ## Quick Start (Original Pipeline — Backward Compatible)
@@ -70,6 +72,12 @@ python src/visualize_results.py
 ```bash
 # Full experiment (data generation + training + symbolic regression)
 python scripts/run_experiment.py --config config/base.yaml
+
+# Fast verified demo run for submission validation
+python scripts/run_experiment.py \
+      --config config/submission_base.yaml \
+      --data-config config/submission_data.yaml \
+      --model-config config/submission_model.yaml
 
 # Hyperparameter sweep
 python scripts/sweep_hyperparams.py
@@ -103,8 +111,19 @@ curl -X POST http://localhost:8000/simulate/trajectory \
 ## Testing
 
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
+
+# Fast end-to-end smoke run
+python tests/smoke_test.py --num-param-points 8 --num-runs-per-param 3 --num-timepoints 20 --epochs 1
 ```
+
+## Submission Materials
+
+The repository includes a curated submission bundle in `submission/` with:
+
+- a concise project summary,
+- validated run commands,
+- a delivery checklist aligned with `docs/submission_guidelines.md`.
 
 ## Model Architectures
 

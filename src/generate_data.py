@@ -9,7 +9,13 @@ Dataset schema:
   dS_dt, dI_dt, dR_dt : estimated vector field (dX/dt = F(X))
 """
 import argparse
+import sys
 from pathlib import Path
+
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
 from src.data.generator import DataPipeline
 
 def generate_dataset(
@@ -45,7 +51,6 @@ def generate_dataset(
     return df
 
 if __name__ == "__main__":
-    repo_root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Generate vector-field SIR dataset.")
     parser.add_argument(
         "--output-path",

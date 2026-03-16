@@ -1,26 +1,25 @@
 # AI Review: SIRA
 
 ## Current Status
-Documentation: ✅ Updated to match code  
+Documentation: ⚠️ Updated where verified, with legacy path mismatches corrected in the CLI scripts  
 Repository Structure: ✅ Organized with `.gitignore`  
 Core Model Code: ✅ Executable scripts exist with CLI  
-Testing: ✅ Smoke test added
+Testing: ✅ Smoke test and targeted pytest suite pass in a local `.venv`
 
 ---
 
 ## Missing
 
-- `notebooks/` folder exists but is empty — no walkthrough notebook
 - `requirements.txt` does not list optional `torchdiffeq` or `PySR`
 - Symbolic regression step is not integrated with training pipeline
-- No integration test beyond smoke test
+- No dedicated API test coverage
 
 ## Mistakes / Problems
 
-- `visualize_results.py` assumes model and dataset exist; no guards or error messages
+- Legacy CLI defaults previously wrote outputs under `src/`; this has been corrected to repo-root paths.
 
 ## Next Actions
 
-1. Create `notebooks/SIRA_walkthrough.ipynb`
-2. Add optional dependencies (`torchdiffeq`, `PySR`) when features are implemented
-3. Add basic error handling for missing dataset/model in visualization
+1. Add optional dependencies (`torchdiffeq`, `PySR`) when those features become first-class.
+2. Add API endpoint tests for model loading and prediction routes.
+3. Expand submission artifacts if a PDF report or resume copy needs to live in-repo.

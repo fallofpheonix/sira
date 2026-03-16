@@ -12,3 +12,4 @@ mlflow
 pyyaml
 pytest
 pytest-cov
+httpx
