@@ -1,8 +1,3 @@
-"""
-SIRA ML Trainer — Vector Field Learning
-
-Task: (S, I, R) → (dS/dt, dI/dt, dR/dt)
-"""
 import argparse
 import os
 from pathlib import Path
@@ -12,49 +7,11 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader
 
-# ─────────────────────────────────────────
-# Dataset
-# ─────────────────────────────────────────
-class VectorFieldDataset(Dataset):
-    """
-    Inputs:  (S, I, R) — normalized state
-    Targets: (dS/dt, dI/dt, dR/dt) — time derivatives
-    """
-    def __init__(self, csv_path):
-        df = pd.read_csv(csv_path)
-        self.X = torch.tensor(df[['S', 'I', 'R']].values, dtype=torch.float32)
-        self.y = torch.tensor(df[['dS_dt', 'dI_dt', 'dR_dt']].values, dtype=torch.float32)
-
-    def __len__(self):
-        return len(self.X)
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.y[idx]
-
-# ─────────────────────────────────────────
-# Model
-# ─────────────────────────────────────────
-class VectorFieldMLP(nn.Module):
-    """
-    Learns a neural approximation of F(S,I,R) = (dS/dt, dI/dt, dR/dt).
-    After training, symbolic regression can extract the functional form.
-    """
-    def __init__(self, input_dim=3, output_dim=3, hidden=128):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden),
-            nn.Tanh(),
-            nn.Linear(hidden, hidden),
-            nn.Tanh(),
-            nn.Linear(hidden, hidden),
-            nn.Tanh(),
-            nn.Linear(hidden, output_dim),
-        )
-
-    def forward(self, x):
-        return self.net(x)
+from src.data.dataset import VectorFieldDataset, DatasetSplitter
+from src.models.architectures.mlp import VectorFieldMLP
+from src.training.trainer import Trainer
 
 # ─────────────────────────────────────────
 # SINDy Baseline
@@ -109,47 +66,32 @@ def train(
     df = pd.read_csv(data_path)
     print(f"Loaded {len(df)} samples from {data_path}")
 
-    dataset = VectorFieldDataset(data_path)
-    n_train = int(0.8 * len(dataset))
-    n_test  = len(dataset) - n_train
-    split_gen = torch.Generator().manual_seed(seed)
-    train_ds, test_ds = random_split(dataset, [n_train, n_test], generator=split_gen)
-
+    dataset = VectorFieldDataset(df)
+    splitter = DatasetSplitter()
+    train_ds, val_ds, test_ds = splitter.split(dataset, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=seed)
+    
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
     test_loader  = DataLoader(test_ds,  batch_size=batch_size, shuffle=False)
 
-    model     = VectorFieldMLP(hidden=hidden)
+    model     = VectorFieldMLP(hidden_dim=hidden)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
+    trainer = Trainer(model, optimizer, criterion)
+
     print(f"\nTraining vector field MLP: (S,I,R) → (dS/dt,dI/dt,dR/dt)")
-    print(f"  Train: {n_train:,}  |  Test: {n_test:,}  |  Epochs: {epochs}\n")
+    print(f"  Train: {len(train_ds):,}  |  Test: {len(test_ds):,}  |  Epochs: {epochs}\n")
 
-    for epoch in range(epochs):
-        model.train()
-        total_loss = 0.0
-        for X_batch, y_batch in train_loader:
-            optimizer.zero_grad()
-            pred = model(X_batch)
-            loss = criterion(pred, y_batch)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-
-        if (epoch + 1) % 10 == 0:
-            model.eval()
-            test_loss = 0.0
-            with torch.no_grad():
-                for X_t, y_t in test_loader:
-                    test_loss += criterion(model(X_t), y_t).item()
-            print(f"Epoch {epoch+1:3d}/{epochs} | "
-                  f"Train Loss: {total_loss/len(train_loader):.6f} | "
-                  f"Test Loss:  {test_loss/len(test_loader):.6f}")
+    trainer.fit(train_loader, val_loader, epochs=epochs)
 
     model_path = Path(model_path)
     model_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), model_path)
-    print(f"\nModel saved: {model_path}")
+    trainer.save_checkpoint(model_path, epochs, 0.0) # Loss is dummy for now
+    # Also save just the state dict for backward compatibility if needed, or update consumers
+    torch.save(model.state_dict(), model_path.with_suffix('.pth'))
+    
+    print(f"\nModel saved: {model_path.with_suffix('.pth')}")
 
     # ── SINDy baseline ──
     print("\n── SINDy Baseline (sparse regression) ──")

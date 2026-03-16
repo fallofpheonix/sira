@@ -1,12 +1,12 @@
 import argparse
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
 
-from train_ml import VectorFieldMLP
+from src.models.architectures.mlp import VectorFieldMLP
+from src.visualization.plots import plot_parity
 
 
 def visualize_results(data_path, model_path, output_path, seed=0, sample_size=5000):
@@ -32,18 +32,7 @@ def visualize_results(data_path, model_path, output_path, seed=0, sample_size=50
         y_pred = model(X).numpy()
 
     # Parity plots
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-    labels = ['dS_dt', 'dI_dt', 'dR_dt']
-    for i, ax in enumerate(axes):
-        ax.scatter(y_true[:, i], y_pred[:, i], s=6, alpha=0.4)
-        ax.set_title(f"{labels[i]}: true vs pred")
-        ax.set_xlabel("true")
-        ax.set_ylabel("pred")
-    plt.tight_layout()
-
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path)
+    plot_parity(y_true, y_pred, output_path=output_path)
     print(f"Results plot saved to {output_path}")
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
 
-from generate_data import generate_dataset
-from train_ml import train
-from visualize_results import visualize_results
+from src.generate_data import generate_dataset
+from src.train_ml import train
+from src.visualize_results import visualize_results
 
 
 def main():
@@ -16,9 +16,9 @@ def main():
     parser.add_argument("--epochs", type=int, default=2)
     args = parser.parse_args()
 
-    data_path = repo_root / "data" / "processed" / "sir_vector_field.csv"
-    model_path = repo_root / "models" / "vector_field_mlp.pth"
-    output_path = repo_root / "results" / "vector_field_parity.png"
+    data_path = Path("/tmp/sira_outputs/data/processed/sir_vector_field.csv")
+    model_path = Path("/tmp/sira_outputs/models/vector_field_mlp.pth")
+    output_path = Path("/tmp/sira_outputs/results/vector_field_parity.png")
 
     generate_dataset(
         output_path=data_path,

@@ -34,7 +34,7 @@ def test_full_pipeline(tmp_path):
     model = VectorFieldMLP(hidden_dim=32)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = torch.nn.MSELoss()
-    trainer = Trainer(model, optimizer, criterion)
+    trainer = Trainer(model, optimizer, criterion, config={'checkpoint_dir': str(tmp_path / 'checkpoints')})
     history = trainer.fit(train_loader, val_loader, epochs=1)
     assert 'train_loss' in history
     assert len(history['train_loss']) == 1
