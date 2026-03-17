@@ -1,5 +1,10 @@
 import argparse
 from pathlib import Path
+
+from _bootstrap import bootstrap
+
+bootstrap()
+
 from sira.core.paths import DEFAULT_DATASET_PATH
 from sira.services.dataset_service import DatasetBuildRequest, DatasetService
 

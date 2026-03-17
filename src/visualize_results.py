@@ -1,5 +1,10 @@
 import argparse
 from pathlib import Path
+
+from _bootstrap import bootstrap
+
+bootstrap()
+
 from sira.core.paths import DEFAULT_DATASET_PATH, DEFAULT_MODEL_PATH, DEFAULT_RESULTS_PATH
 from sira.services.reporting_service import ReportBuildRequest, ReportingService
 

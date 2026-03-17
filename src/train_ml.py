@@ -1,6 +1,10 @@
 import argparse
 from pathlib import Path
 
+from _bootstrap import bootstrap
+
+bootstrap()
+
 import numpy as np
 import pandas as pd
 from src.symbolic.sindy import SINDy
