@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from typing import cast, Union
 
 from _bootstrap import bootstrap
 
@@ -13,13 +14,13 @@ from sira.services.training_service import TrainingRunRequest, TrainingService
 
 
 def train(
-    data_path,
-    model_path,
-    batch_size=256,
-    lr=1e-3,
-    epochs=100,
-    hidden=128,
-    seed=42,
+    data_path: Union[str, Path],
+    model_path: Union[str, Path],
+    batch_size: int = 256,
+    lr: float = 1e-3,
+    epochs: int = 100,
+    hidden: int = 128,
+    seed: int = 42,
 ):
     np.random.seed(seed)
     data_path = Path(data_path)
@@ -51,7 +52,8 @@ def train(
 
     print("\nSINDy sparse regression:")
     sindy = SINDy().fit(df)
-    for eq, expr in sindy.get_equations().items():
+    equations = cast(dict[str, str], sindy.get_equations())
+    for eq, expr in equations.items():
         print(f"  {eq} = {expr}")
 
     print("\nTrue SIR governing equations:")

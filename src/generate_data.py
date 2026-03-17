@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from typing import Union
 
 from _bootstrap import bootstrap
 
@@ -10,17 +11,17 @@ from sira.services.dataset_service import DatasetBuildRequest, DatasetService
 
 
 def generate_dataset(
-    output_path,
-    num_param_points=500,
-    num_runs_per_param=20,
-    population=1000,
-    num_timepoints=100,
-    beta_min=0.1,
-    beta_max=0.9,
-    gamma_min=0.02,
-    gamma_max=0.4,
-    seed=42,
-    max_time=150,
+    output_path: Union[str, Path],
+    num_param_points: int = 500,
+    num_runs_per_param: int = 20,
+    population: int = 1000,
+    num_timepoints: int = 100,
+    beta_min: float = 0.1,
+    beta_max: float = 0.9,
+    gamma_min: float = 0.02,
+    gamma_max: float = 0.4,
+    seed: int = 42,
+    max_time: float = 150,
 ):
     service = DatasetService()
     print(f"Generating {num_param_points} parameter points × {num_runs_per_param} runs each...")

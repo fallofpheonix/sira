@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 import torch
@@ -15,6 +16,7 @@ class ExperimentResult:
     dataset_path: Path
     model_path: Path
     symbolic_expression_path: Path
+    run_summary_path: Path
 
 
 class ExperimentService:
@@ -51,7 +53,7 @@ class ExperimentService:
         model_section = model_config.get("model", {})
         training_section = model_config.get("training", {})
         model_path = Path(training_section.get("output_path", "models/vector_field_mlp.pth"))
-        self.training_service.train_vector_field_model(
+        training_result = self.training_service.train_vector_field_model(
             TrainingRunRequest(
                 dataset_path=dataset_path,
                 model_output_path=model_path,
@@ -77,5 +79,22 @@ class ExperimentService:
         sindy.fit(dataset)
         sindy.save(expression_path)
 
-        # TODO: persist metrics once the training loop exposes a stable summary payload.
-        return ExperimentResult(dataset_path=dataset_path, model_path=model_path, symbolic_expression_path=expression_path)
+        run_summary_path = output_dir / "run_summary.json"
+        run_summary = {
+            "dataset_path": str(dataset_path),
+            "model_path": str(model_path),
+            "checkpoint_path": str(training_result.checkpoint_path),
+            "rows_seen": training_result.rows_seen,
+            "final_train_loss": training_result.history["train_loss"][-1] if training_result.history["train_loss"] else None,
+            "final_val_loss": training_result.history["val_loss"][-1] if training_result.history["val_loss"] else None,
+            "symbolic_expression_path": str(expression_path),
+        }
+        with run_summary_path.open("w", encoding="utf-8") as handle:
+            json.dump(run_summary, handle, indent=2)
+
+        return ExperimentResult(
+            dataset_path=dataset_path,
+            model_path=model_path,
+            symbolic_expression_path=expression_path,
+            run_summary_path=run_summary_path,
+        )

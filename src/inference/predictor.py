@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from pathlib import Path
+import re
 from src.models.registry import get_model
 
 
@@ -30,8 +31,10 @@ class VectorFieldPredictor:
         else:
             # Bare state_dict (e.g. torch.save(model.state_dict(), path)).
             name = self.model_name or 'VectorFieldMLP'
+            inferred_kwargs = self._infer_model_kwargs_from_state_dict(checkpoint)
+            effective_kwargs = {**inferred_kwargs, **self.model_kwargs}
             try:
-                self.model = get_model(name, **self.model_kwargs)
+                self.model = get_model(name, **effective_kwargs)
             except (ValueError, TypeError) as exc:
                 raise RuntimeError(
                     f"Failed to instantiate model '{name}' for checkpoint "
@@ -42,6 +45,37 @@ class VectorFieldPredictor:
         self.model.to(self.device)
         self.model.eval()
         return self
+
+    @staticmethod
+    def _infer_model_kwargs_from_state_dict(state_dict):
+        if not isinstance(state_dict, dict):
+            return {}
+
+        first_layer = state_dict.get('net.0.weight')
+        if first_layer is None or not hasattr(first_layer, 'shape') or len(first_layer.shape) != 2:
+            return {}
+
+        hidden_dim = int(first_layer.shape[0])
+
+        linear_weight_pattern = re.compile(r"^net\.(\d+)\.weight$")
+        linear_indices = []
+        for key, tensor in state_dict.items():
+            match = linear_weight_pattern.match(key)
+            if not match or not hasattr(tensor, 'shape') or len(tensor.shape) != 2:
+                continue
+            linear_indices.append(int(match.group(1)))
+
+        if not linear_indices:
+            return {"hidden_dim": hidden_dim}
+
+        linear_indices.sort()
+        num_layers = max(len(linear_indices) - 1, 1)
+        return {
+            "hidden_dim": hidden_dim,
+            "num_layers": num_layers,
+            "activation": "tanh",
+            "dropout": 0.0,
+        }
 
     def predict(self, S, I, R):
         if self.model is None:
