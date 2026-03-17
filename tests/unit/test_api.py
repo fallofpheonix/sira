@@ -5,21 +5,17 @@ The tests cover two scenarios:
   - no model loaded (predictor is None): health, /models, /predict → 503
   - model loaded in-memory: /health, /predict/vector_field, /simulate/trajectory
 """
-import sys
-import torch
-import pytest
+import tempfile
 from pathlib import Path
 
-# Ensure the repo root is importable when running outside pytest conftest scope.
-repo_root = Path(__file__).resolve().parent.parent.parent
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
-
 from fastapi.testclient import TestClient
+import pytest
+import torch
 
 from src.inference.api.server import app
-from src.inference.predictor import VectorFieldPredictor
 from src.models.architectures.mlp import VectorFieldMLP
+from src.inference.predictor import VectorFieldPredictor
+from sira.services.inference_service import InferenceService
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -37,13 +33,19 @@ def _make_predictor(tmp_path, hidden_dim=32):
     return predictor
 
 
+def _make_service(tmp_path, hidden_dim=32):
+    service = InferenceService(model_path=Path(tmp_path) / "test_model.pth")
+    service.predictor = _make_predictor(tmp_path, hidden_dim=hidden_dim)
+    return service
+
+
 # ── Tests: no model loaded ────────────────────────────────────────────────────
 
 class TestNoModel:
     """Endpoints that operate without a loaded model."""
 
     def setup_method(self):
-        app.state.predictor = None
+        app.state.inference_service = InferenceService(model_path=Path("missing-model.pth"))
         self.client = TestClient(app, raise_server_exceptions=True)
 
     def test_health_no_model(self):
@@ -85,16 +87,14 @@ class TestWithModel:
     """Endpoints that require a loaded predictor."""
 
     def setup_method(self, tmp_path_factory=None):
-        # Build a temp directory manually (pytest tmp_path fixture not available in setup_method).
-        import tempfile, shutil
         self._tmpdir = Path(tempfile.mkdtemp())
-        app.state.predictor = _make_predictor(self._tmpdir)
+        app.state.inference_service = _make_service(self._tmpdir)
         self.client = TestClient(app, raise_server_exceptions=True)
 
     def teardown_method(self):
         import shutil
         shutil.rmtree(self._tmpdir, ignore_errors=True)
-        app.state.predictor = None
+        app.state.inference_service = InferenceService(model_path=Path("missing-model.pth"))
 
     def test_health_with_model(self):
         r = self.client.get("/health")
