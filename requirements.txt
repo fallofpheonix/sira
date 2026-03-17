@@ -4,8 +4,6 @@ scipy
 tqdm
 matplotlib
 torch
-torchvision
-torchaudio
 fastapi
 uvicorn
 mlflow

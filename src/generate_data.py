@@ -1,22 +1,13 @@
-"""
-SIRA Data Generator — Vector Field Learning
-
-Generates ensemble-averaged stochastic SIR trajectories and computes
-finite-difference derivative estimates for vector field learning.
-
-Dataset schema:
-  S, I, R             : mean trajectory values
-  dS_dt, dI_dt, dR_dt : estimated vector field (dX/dt = F(X))
-"""
 import argparse
 import sys
 from pathlib import Path
 
 repo_root = Path(__file__).resolve().parent.parent
 if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
+    sys.path.insert(0, str(repo_root))
 
 from src.data.generator import DataPipeline
+
 
 def generate_dataset(
     output_path,
@@ -29,7 +20,7 @@ def generate_dataset(
     gamma_min=0.02,
     gamma_max=0.4,
     seed=42,
-    max_time=150
+    max_time=150,
 ):
     config = {
         'population': population,
@@ -41,14 +32,14 @@ def generate_dataset(
         'num_param_points': num_param_points,
         'num_runs_per_param': num_runs_per_param,
         'num_timepoints': num_timepoints,
-        'max_time': max_time
+        'max_time': max_time,
     }
     pipeline = DataPipeline(config)
     print(f"Generating {num_param_points} parameter points × {num_runs_per_param} runs each...")
     df = pipeline.run(output_path)
-    print(f"\nDataset saved: {output_path}  ({len(df)} rows, {len(df.columns)} columns)")
-    print(df.head(3))
+    print(f"Dataset saved: {output_path}  ({len(df)} rows)")
     return df
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate vector-field SIR dataset.")
@@ -78,5 +69,6 @@ if __name__ == "__main__":
         gamma_min=args.gamma_min,
         gamma_max=args.gamma_max,
         seed=args.seed,
-        max_time=args.max_time
+        max_time=args.max_time,
     )
+

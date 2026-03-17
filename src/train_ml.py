@@ -16,43 +16,10 @@ from torch.utils.data import DataLoader
 
 from src.data.dataset import VectorFieldDataset, DatasetSplitter
 from src.models.architectures.mlp import VectorFieldMLP
+from src.symbolic.sindy import SINDy
 from src.training.trainer import Trainer
 
-# ─────────────────────────────────────────
-# SINDy Baseline
-# ─────────────────────────────────────────
-def sindy_baseline(df):
-    """
-    SINDy-style least-squares regression with polynomial library.
-    Library: [S, I, R, S*I, S*R, I*R, S^2, I^2, R^2]
-    """
-    S = df['S'].values
-    I = df['I'].values
-    R = df['R'].values
 
-    # Feature library
-    Theta = np.column_stack([
-        S, I, R,
-        S*I, S*R, I*R,
-        S**2, I**2, R**2,
-        np.ones(len(S))
-    ])
-
-    feature_names = ['S', 'I', 'R', 'SI', 'SR', 'IR', 'S^2', 'I^2', 'R^2', '1']
-
-    results = {}
-    for target_col in ['dS_dt', 'dI_dt', 'dR_dt']:
-        dy = df[target_col].values
-        # Least-squares: minimise ||Theta @ xi - dy||
-        xi, _, _, _ = np.linalg.lstsq(Theta, dy, rcond=None)
-        terms = [(name, coef) for name, coef in zip(feature_names, xi) if abs(coef) > 1e-3]
-        results[target_col] = terms
-
-    return results
-
-# ─────────────────────────────────────────
-# Training
-# ─────────────────────────────────────────
 def train(
     data_path,
     model_path,
@@ -74,41 +41,35 @@ def train(
     dataset = VectorFieldDataset(df)
     splitter = DatasetSplitter()
     train_ds, val_ds, test_ds = splitter.split(dataset, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, seed=seed)
-    
+
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
-    test_loader  = DataLoader(test_ds,  batch_size=batch_size, shuffle=False)
 
-    model     = VectorFieldMLP(hidden_dim=hidden)
+    model = VectorFieldMLP(hidden_dim=hidden)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
     trainer = Trainer(model, optimizer, criterion)
 
-    print(f"\nTraining vector field MLP: (S,I,R) → (dS/dt,dI/dt,dR/dt)")
-    print(f"  Train: {len(train_ds):,}  |  Test: {len(test_ds):,}  |  Epochs: {epochs}\n")
+    print(f"\nTraining VectorFieldMLP: (S,I,R) → (dS/dt,dI/dt,dR/dt)")
+    print(f"  Train: {len(train_ds):,}  |  Val: {len(val_ds):,}  |  Epochs: {epochs}\n")
 
     trainer.fit(train_loader, val_loader, epochs=epochs)
 
     model_path = Path(model_path)
     model_path.parent.mkdir(parents=True, exist_ok=True)
-    trainer.save_checkpoint(model_path, epochs, 0.0) # Loss is dummy for now
-    # Also save just the state dict for backward compatibility if needed, or update consumers
-    torch.save(model.state_dict(), model_path.with_suffix('.pth'))
-    
-    print(f"\nModel saved: {model_path.with_suffix('.pth')}")
+    torch.save(model.state_dict(), model_path)
+    print(f"\nModel saved: {model_path}")
 
-    # ── SINDy baseline ──
-    print("\n── SINDy Baseline (sparse regression) ──")
-    sindy_results = sindy_baseline(df)
-    for eq, terms in sindy_results.items():
-        expr = " + ".join(f"{c:.4f}*{n}" for n, c in terms)
+    print("\nSINDy sparse regression:")
+    sindy = SINDy().fit(df)
+    for eq, expr in sindy.get_equations().items():
         print(f"  {eq} = {expr}")
 
-    print("\n── True SIR ODE (ground truth) ──")
-    print("  dS/dt = -β * S * I")
-    print("  dI/dt =  β * S * I - γ * I")
-    print("  dR/dt =  γ * I")
+    print("\nTrue SIR governing equations:")
+    print("  dS/dt = -β·S·I")
+    print("  dI/dt =  β·S·I - γ·I")
+    print("  dR/dt =  γ·I")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train vector-field SIR model.")
