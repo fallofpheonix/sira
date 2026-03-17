@@ -1,12 +1,7 @@
 import argparse
-import sys
 from pathlib import Path
-
-repo_root = Path(__file__).resolve().parent.parent
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
-
-from src.data.generator import DataPipeline
+from sira.core.paths import DEFAULT_DATASET_PATH
+from sira.services.dataset_service import DatasetBuildRequest, DatasetService
 
 
 def generate_dataset(
@@ -22,22 +17,25 @@ def generate_dataset(
     seed=42,
     max_time=150,
 ):
-    config = {
-        'population': population,
-        'beta_min': beta_min,
-        'beta_max': beta_max,
-        'gamma_min': gamma_min,
-        'gamma_max': gamma_max,
-        'seed': seed,
-        'num_param_points': num_param_points,
-        'num_runs_per_param': num_runs_per_param,
-        'num_timepoints': num_timepoints,
-        'max_time': max_time,
-    }
-    pipeline = DataPipeline(config)
+    service = DatasetService()
     print(f"Generating {num_param_points} parameter points × {num_runs_per_param} runs each...")
-    df = pipeline.run(output_path)
-    print(f"Dataset saved: {output_path}  ({len(df)} rows)")
+    df = service.build_vector_field_dataset(
+        DatasetBuildRequest(
+            output_path=Path(output_path),
+            num_param_points=num_param_points,
+            num_runs_per_param=num_runs_per_param,
+            population=population,
+            num_timepoints=num_timepoints,
+            beta_min=beta_min,
+            beta_max=beta_max,
+            gamma_min=gamma_min,
+            gamma_max=gamma_max,
+            seed=seed,
+            max_time=max_time,
+        )
+    )
+    print(f"\nDataset saved: {output_path}  ({len(df)} rows, {len(df.columns)} columns)")
+    print(df.head(3))
     return df
 
 
@@ -45,7 +43,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate vector-field SIR dataset.")
     parser.add_argument(
         "--output-path",
-        default=str(repo_root / "data" / "processed" / "sir_vector_field.csv"),
+        default=str(DEFAULT_DATASET_PATH),
     )
     parser.add_argument("--num-param-points", type=int, default=500)
     parser.add_argument("--num-runs-per-param", type=int, default=20)

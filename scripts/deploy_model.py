@@ -4,10 +4,10 @@ Usage: python scripts/deploy_model.py --model-path models/vector_field_mlp.pth
 """
 import argparse
 import os
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from _bootstrap import bootstrap
+
+bootstrap()
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     os.environ['MODEL_PATH'] = args.model_path
     try:
         import uvicorn
-        from src.inference.api.server import app
+        from sira.api.app import app
         print(f"Starting SIRA API server at http://{args.host}:{args.port}")
         uvicorn.run(app, host=args.host, port=args.port)
     except ImportError:

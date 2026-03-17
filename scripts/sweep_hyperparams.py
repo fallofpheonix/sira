@@ -2,13 +2,15 @@
 """Hyperparameter sweep.
 Usage: python scripts/sweep_hyperparams.py
 """
-import sys
 from pathlib import Path
 import torch
 import torch.nn as nn
-import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from _bootstrap import bootstrap
+
+bootstrap()
+
+from sira.core.paths import DEFAULT_DATASET_PATH
 
 SWEEP_CONFIG = {
     'learning_rate': [1e-3, 5e-4, 1e-4],
@@ -18,8 +20,8 @@ SWEEP_CONFIG = {
 
 
 def main():
-    data_path = 'data/processed/sir_vector_field.csv'
-    if not Path(data_path).exists():
+    data_path = Path(DEFAULT_DATASET_PATH)
+    if not data_path.exists():
         print(f"Dataset not found at {data_path}. Run generate_data.py first.")
         return
 

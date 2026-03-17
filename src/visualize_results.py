@@ -1,17 +1,7 @@
 import argparse
-import sys
 from pathlib import Path
-
-repo_root = Path(__file__).resolve().parent.parent
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
-
-import numpy as np
-import pandas as pd
-import torch
-
-from src.models.architectures.mlp import VectorFieldMLP
-from src.visualization.plots import plot_parity
+from sira.core.paths import DEFAULT_DATASET_PATH, DEFAULT_MODEL_PATH, DEFAULT_RESULTS_PATH
+from sira.services.reporting_service import ReportBuildRequest, ReportingService
 
 
 def visualize_results(
@@ -25,59 +15,39 @@ def visualize_results(
     activation='tanh',
     dropout=0.0,
 ):
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
     data_path = Path(data_path)
     model_path = Path(model_path)
+    output_path = Path(output_path)
 
-    if not data_path.exists():
-        print(f"Dataset not found at {data_path}. Run src/generate_data.py first.")
-        return
-    if not model_path.exists():
-        print(f"Model not found at {model_path}. Run src/train_ml.py first.")
-        return
-
-    df = pd.read_csv(data_path)
-    if len(df) == 0:
-        print("Dataset is empty.")
-        return
-
-    sample_size = min(sample_size, len(df))
-    df_sample = df.sample(n=sample_size, random_state=seed)
-
-    X = torch.tensor(df_sample[['S', 'I', 'R']].values, dtype=torch.float32)
-    y_true = df_sample[['dS_dt', 'dI_dt', 'dR_dt']].values
-
-    model = VectorFieldMLP(
-        hidden_dim=hidden_dim,
-        num_layers=num_layers,
-        activation=activation,
-        dropout=dropout,
+    service = ReportingService()
+    report_path = service.build_parity_report(
+        ReportBuildRequest(
+            dataset_path=data_path,
+            model_path=model_path,
+            output_path=output_path,
+            seed=seed,
+            sample_size=sample_size,
+            hidden_dim=hidden_dim,
+            num_layers=num_layers,
+            activation=activation,
+            dropout=dropout,
+        )
     )
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
-    model.eval()
-
-    with torch.no_grad():
-        y_pred = model(X).numpy()
-
-    # Parity plots
-    plot_parity(y_true, y_pred, output_path=output_path)
-    print(f"Results plot saved to {output_path}")
+    print(f"Results plot saved to {report_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize model and symbolic results.")
     parser.add_argument(
         "--data-path",
-        default=str(repo_root / "data" / "processed" / "sir_vector_field.csv"),
+        default=str(DEFAULT_DATASET_PATH),
     )
     parser.add_argument(
         "--model-path",
-        default=str(repo_root / "models" / "vector_field_mlp.pth"),
+        default=str(DEFAULT_MODEL_PATH),
     )
     parser.add_argument(
         "--output-path",
-        default=str(repo_root / "results" / "vector_field_parity.png"),
+        default=str(DEFAULT_RESULTS_PATH),
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--sample-size", type=int, default=5000)
