@@ -15,6 +15,7 @@ build/
 venv/
 env/
 .env
+.env.local
 
 # Data artifacts
 data/processed/
@@ -45,6 +46,11 @@ mlruns/
 .pytest_cache/
 .coverage
 htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Runtime
+logs/
 
 # IDE
 .vscode/
