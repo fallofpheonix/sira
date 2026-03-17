@@ -1,0 +1,11 @@
+experiment:
+  name: sira_experiment
+  seed: 42
+  output_dir: results/
+  log_dir: logs/
+  checkpoint_dir: checkpoints/
+
+mlflow:
+  enabled: false
+  tracking_uri: mlruns
+  experiment_name: sira
